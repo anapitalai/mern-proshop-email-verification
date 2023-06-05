@@ -1,6 +1,7 @@
 import asyncHandler from '../middleware/asyncHandler.js';
 import generateToken from '../utils/generateToken.js';
 import User from '../models/userModel.js';
+import parser from 'ua-parser-js'
 
 // @desc    Auth user & get token
 // @route   POST /api/users/auth
@@ -11,8 +12,9 @@ const authUser = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
 
   if (user && (await user.matchPassword(password))) {
+    // user agent check
+    
     generateToken(res, user._id);
-
     res.json({
       _id: user._id,
       name: user.name,
@@ -37,11 +39,14 @@ const registerUser = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error('User already exists');
   }
-
+    // Get UserAgent, email verification
+    const ua = parser(req.headers["user-agent"]);
+    const userAgent = [ua.ua];
   const user = await User.create({
     name,
     email,
     password,
+    userAgent
   });
 
   if (user) {
